@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+/* header files */
 struct file *file_new(int type, char *name) {
   /* Initialization */
   struct file *file = NULL;
@@ -39,12 +39,41 @@ void file_release(struct file *file) {
 
 bool file_write(struct file *file, int offset, int bytes, const char *buf) {
   /* YOUR CODE HERE */
-  printf("NOT IMPLEMENTED\n");
-  return false;
+  /* printf("NOT IMPLEMENTED\n"); */
+  if(offset < 0)/* `offset` is negative */
+    return false;
+  if(bytes < 0)/* `offset + bytes` exceed the current file size */
+    return false;
+  if(!file)/* Handle `NULL` pointers properly */
+    return false;
+  if(!buf)/* Handle `NULL` pointers properly */
+    return false;
+  /*  return `false` if `offset` is negative or handle `NULL` pointers properly*/
+  if(file->size < offset + bytes)
+    file->data = realloc(file->data, sizeof(file->type)*(offset + bytes));
+  /* Enlarge the file size if `offset + bytes` exceed current file size */
+
+  for(int i = 0; i < bytes; ++i)
+    file->data[i + offset] = buf[i];
+  /* [ `offset` , `offset` + bytes ) */
+  return true;
 }
 
 bool file_read(const struct file *file, int offset, int bytes, char *buf) {
   /* YOUR CODE HERE */
-  printf("NOT IMPLEMENTED\n");
-  return false;
+  /* printf("NOT IMPLEMENTED\n"); */
+  if(!file)
+    return false;/* Handle `NULL` pointers properly */
+  if(!buf)
+    return false;/* Handle `NULL` pointers properly */
+  if (offset < 0)
+    return false;/* `offset` is negative */
+  if(offset + bytes > file->size)
+    return false; /* `offset + bytes` exceed the current file size */
+  
+  for(int i = 0; i < bytes; ++i)
+    buf[i] = file->data[offset + i];
+
+  /* [ `offset` , `offset` + bytes ) */
+  return true;
 }
