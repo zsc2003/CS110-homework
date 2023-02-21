@@ -49,8 +49,12 @@ bool file_write(struct file *file, int offset, int bytes, const char *buf) {
   if(!buf)/* Handle `NULL` pointers properly */
     return false;
   /*  return `false` if `offset` is negative or handle `NULL` pointers properly*/
+
   if(file->size < offset + bytes)
-    file->data = realloc(file->data, sizeof(file->type)*(offset + bytes));
+  {
+    file->data = realloc(file->data, sizeof(char)*(offset + bytes));
+    file->size = offset + bytes;
+  }
   /* Enlarge the file size if `offset + bytes` exceed current file size */
 
   for(int i = 0; i < bytes; ++i)

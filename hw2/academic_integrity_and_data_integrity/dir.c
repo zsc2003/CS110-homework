@@ -5,8 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 /* header files */
-// static bool dir_add_sub(struct directory *dirnode, struct node *sub); /* static function */
-
+// static bool dir_add_sub(struct directory *dirnode, struct node *sub)/* static function */
+// {
+    // return;
+// } 
 struct directory *dir_new(char *name) {
   /* Initialization */
   struct directory *dir = NULL;
@@ -71,7 +73,7 @@ bool dir_add_file(struct directory *dir, int type, char *name) {
     return false;
   for(int i = 0; i < dir->size ; ++i)
   {
-    if(dir->subordinates[i]->is_dir == false)/* it should be a file*/
+    // if(dir->subordinates[i]->is_dir == false)/* it should be a file*/
     {
       if(strcmp(dir->subordinates[i]->name, name) == 0)  
         return false; /* `name` already exists */
@@ -81,7 +83,7 @@ bool dir_add_file(struct directory *dir, int type, char *name) {
   if(dir->size == dir->capacity)
   {
     dir->capacity *= 2; /* enlarge the capacity of dir*/
-    dir->subordinates = realloc(dir->subordinates, dir->capacity);
+    dir->subordinates = (struct node**)realloc(dir->subordinates, sizeof(struct node*) * dir->capacity);
     for(int i = dir->capacity / 2; i < dir->capacity; ++i)
       dir->subordinates[i] = NULL;
   }
@@ -101,7 +103,7 @@ bool dir_add_subdir(struct directory *dir, char *name) {
     return false;
   for(int i = 0; i < dir->size ; ++i)
   {
-    if(dir->subordinates[i]->is_dir == true)/* it should be a dir*/
+    // if(dir->subordinates[i]->is_dir == true)/* it should be a dir*/
     {
       if(strcmp(dir->subordinates[i]->name, name) == 0)  
         return false; /* `name` already exists */
@@ -131,11 +133,12 @@ bool dir_delete(struct directory *dir, const char *name) {
     return false;
   for(int i = 0; i < dir->size; ++i)
   {
-    if(dir->subordinates[i]->is_dir == true)/* deal with dir*/
+    // if(dir->subordinates[i]->is_dir == true)/* deal with dir*/
     {
       if(strcmp(dir->subordinates[i]->name, name) == 0)
       { /* matched the dir that need to be deleted*/
         node_release(dir->subordinates[i]);
+        dir->subordinates[i] = dir->subordinates[dir->size - 1];
         --dir->size;
         return true;
       }
