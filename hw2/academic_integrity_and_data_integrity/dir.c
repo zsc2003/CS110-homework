@@ -74,10 +74,10 @@ bool dir_add_file(struct directory *dir, int type, char *name) {
   for(int i = 0; i < dir->size ; ++i)
   {
     // if(dir->subordinates[i]->is_dir == false)/* it should be a file*/
-    {
+    // { do not need to consider about that
       if(strcmp(dir->subordinates[i]->name, name) == 0)  
         return false; /* `name` already exists */
-    }
+    // }
   }
     
   if(dir->size == dir->capacity)
@@ -85,10 +85,13 @@ bool dir_add_file(struct directory *dir, int type, char *name) {
     dir->capacity *= 2; /* enlarge the capacity of dir*/
     dir->subordinates = (struct node**)realloc(dir->subordinates, sizeof(struct node*) * dir->capacity);
     for(int i = dir->capacity / 2; i < dir->capacity; ++i)
-      dir->subordinates[i] = NULL;
+      dir->subordinates[i] = NULL; /* init unused as null pointer */
   }
   
   struct file* new_file = file_new(type, name);
+  if(!new_file) /* make file fail*/
+    return false;
+
   dir->subordinates[dir->size] = node_new(false, name, new_file); /* set up a new file*/
   ++dir->size;/* enlarge the size of dir*/
   return true;/*success*/
@@ -104,10 +107,10 @@ bool dir_add_subdir(struct directory *dir, char *name) {
   for(int i = 0; i < dir->size ; ++i)
   {
     // if(dir->subordinates[i]->is_dir == true)/* it should be a dir*/
-    {
+    // { do not need to consider about that
       if(strcmp(dir->subordinates[i]->name, name) == 0)  
         return false; /* `name` already exists */
-    }
+    // }
   }
 
   if(dir->size == dir->capacity)
@@ -115,10 +118,15 @@ bool dir_add_subdir(struct directory *dir, char *name) {
     dir->capacity *= 2; /* enlarge the capacity of dir*/
     dir->subordinates = realloc(dir->subordinates, dir->capacity);
     for(int i = dir->capacity / 2; i < dir->capacity; ++i)
-      dir->subordinates[i] = NULL;
+      dir->subordinates[i] = NULL; /* init unused as null pointer */
   }
 
   struct directory* new_dir = dir_new(name);
+  if(!new_dir)/* make file fail*/
+    return false;
+
+  new_dir->parent = dir; /* important!! do not forget to set the parent*/
+
   dir->subordinates[dir->size] = node_new(true, name, new_dir); /* set up a new dir*/
   ++dir->size;/* enlarge the size of dir*/
   return true;/*success*/
@@ -138,7 +146,7 @@ bool dir_delete(struct directory *dir, const char *name) {
       if(strcmp(dir->subordinates[i]->name, name) == 0)
       { /* matched the dir that need to be deleted*/
         node_release(dir->subordinates[i]);
-        dir->subordinates[i] = dir->subordinates[dir->size - 1];
+        dir->subordinates[i] = dir->subordinates[dir->size - 1]; /* important!!! remove the last one into the middle*/
         --dir->size;
         return true;
       }
