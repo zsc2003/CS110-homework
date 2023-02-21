@@ -1,7 +1,7 @@
 # see <https://makefiletutorial.com/> for a comprehensive & comprehendible tutorial on GNU make
 
 CC = gcc
-CFLAGS = -ansi -Wall -Wextra -Werror -Wpedantic
+CFLAGS = -Wall -Wextra -Werror -Wpedantic
 
 test_src = tester/file_tester.c tester/dir_tester.c tester/explorer_tester.c
 
@@ -17,11 +17,11 @@ all: $(obj_files) $(static_obj_files) $(dynamic_obj_files)
 .PHONY: all 
 
 %.o : %.c
-	echo "TODO $@"
+	$(CC) $(CFLAGS) -c $< -o $@
 %.o-static : %.c
-	echo "TODO $@"
+	$(CC) $(CFLAGS) -c $< -o $@
 %.o-dynamic : %.c
-	echo "TODO $@"
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(obj_files)
@@ -38,7 +38,7 @@ $(dynamic_lib): $(dynamic_obj_files)
 	echo "TODO $@"
 
 test.out:         main.c $(test_src) $(obj_files)
-	echo "TODO $@"
+	$(CC) $(CFLAGS) $^ -o $@
 test.static.out:  main.c $(test_src) $(dynamic_obj_files) $(static_lib)
 	echo "TODO $@"
 test.dynamic.out: main.c $(test_src) $(static_obj_files)  $(dynamic_lib)
