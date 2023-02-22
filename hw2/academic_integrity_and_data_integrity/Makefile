@@ -31,7 +31,7 @@ clean:
 
 # the statically linked library (or archive library)
 $(static_lib): $(static_obj_files)
-	echo "TODO $@"
+	$(CC) -c -o libexplorer.a $@
 
 # the dynamically linked library (or shared object)
 $(dynamic_lib): $(dynamic_obj_files)
@@ -40,7 +40,8 @@ $(dynamic_lib): $(dynamic_obj_files)
 test.out:         main.c $(test_src) $(obj_files)
 	$(CC) $(CFLAGS) $^ -o $@
 test.static.out:  main.c $(test_src) $(dynamic_obj_files) $(static_lib)
-	echo "TODO $@"
+	$(CC) $(CFLAGS) $^ -o $@
 test.dynamic.out: main.c $(test_src) $(static_obj_files)  $(dynamic_lib)
-	echo "TODO $@"
+	$(CC) $(CFLAGS) $^ -o $@
+	
 
