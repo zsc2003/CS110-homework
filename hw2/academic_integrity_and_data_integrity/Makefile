@@ -21,7 +21,7 @@ all: $(obj_files) $(static_obj_files) $(dynamic_obj_files)
 %.o-static : %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 %.o-dynamic : %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -fpic -shared -c $< -o $@
 
 clean:
 	rm -f $(obj_files)
@@ -31,21 +31,28 @@ clean:
 
 # the statically linked library (or archive library)
 $(static_lib): $(static_obj_files)
-	ar rcs $(static_lib) $(static_obj_files)
+	ar rcs $@ $^
 
 # the dynamically linked library (or shared object)
 $(dynamic_lib): $(dynamic_obj_files)
-	#(CC) -fpic -shared $(dynamic_obj_files) -o $(dynamic_lib)
+	$(CC) -fpic -shared $^ -o $@
 
 test.out:         main.c $(test_src) $(obj_files)
 	$(CC) $(CFLAGS) $^ -o $@
+
 test.static.out:  main.c $(test_src) $(dynamic_obj_files) $(static_lib)
-	$(CC) $(CFLAGS) -static main.c $(test_src) $(dynamic_obj_files) $(static_lib) -o test.static.out
+	$(CC) $(CFLAGS) $^ -o $@ -static 
+# $(CC) $(CFLAGS) -static main.c $(test_src) $(dynamic_obj_files) $(static_lib) -o test.static.out
 
-# $(CC) $(CFLAGS) -static $^ -o $@
 test.dynamic.out: main.c $(test_src) $(static_obj_files)  $(dynamic_lib)
-	$(CC) $(CFLAGS) main.c $(test_src) $(static_obj_files) $(dynamic_lib) -o test.dynamic.out
+	$(CC) $(CFLAGS) $^ -o $@ -Wl,rpath=.
+#	$(CC) $(CFLAGS) main.c $(test_src) $(static_obj_files) $(dynamic_lib) -o test.dynamic.out
 
-#	$(CC) $(CFLAGS) $^ -o $@
-	
+test-memcheck:
+	valgrind --tool=memcheck --leak-check=full --track-origins=yes ./test.out
 
+test.static-memcheck:
+	valgrind --tool=memcheck --leak-check=full --track-origins=yes ./test.static.out
+
+test.dynamic-memcheck:
+	valgrind --tool=memcheck --leak-check=full --track-origins=yes ./test.dynamic.out
