@@ -44,8 +44,8 @@ test.static.out:  main.c $(test_src) $(dynamic_obj_files) $(static_lib)
 	$(CC) $(CFLAGS) $^ -o $@ -static 
 # $(CC) $(CFLAGS) -static main.c $(test_src) $(dynamic_obj_files) $(static_lib) -o test.static.out
 
-test.dynamic.out: main.c $(test_src) $(static_obj_files)  $(dynamic_lib)
-	$(CC) $(CFLAGS) $^ -o $@ -Wl,rpath=.
+test.dynamic.out: main.c $(test_src) $(dynamic_lib)
+	$(CC) $(CFLAGS) $^ -o $@ -Wl,-rpath=.
 #	$(CC) $(CFLAGS) main.c $(test_src) $(static_obj_files) $(dynamic_lib) -o test.dynamic.out
 
 test-memcheck:
