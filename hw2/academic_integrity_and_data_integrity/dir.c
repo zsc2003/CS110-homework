@@ -116,7 +116,7 @@ bool dir_add_subdir(struct directory *dir, char *name) {
   if(dir->size == dir->capacity)
   {
     dir->capacity *= 2; /* enlarge the capacity of dir*/
-    dir->subordinates = realloc(dir->subordinates, dir->capacity);
+    dir->subordinates = realloc(dir->subordinates, sizeof(struct node*) * dir->capacity);
     for(int i = dir->capacity / 2; i < dir->capacity; ++i)
       dir->subordinates[i] = NULL; /* init unused as null pointer */
   }
