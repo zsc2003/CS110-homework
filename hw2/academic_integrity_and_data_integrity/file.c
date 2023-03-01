@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 /* header files */
+// construct a new file
 struct file *file_new(int type, char *name) {
   /* Initialization */
   struct file *file = NULL;
@@ -21,6 +22,7 @@ struct file *file_new(int type, char *name) {
   return file;
 }
 
+// release the file's pointer memory
 void file_release(struct file *file) {
   /* Check for null pointer. */
   if (!file) {
@@ -37,6 +39,7 @@ void file_release(struct file *file) {
   free(file);
 }
 
+// write [offset, offset + bytes] from buf to file
 bool file_write(struct file *file, int offset, int bytes, const char *buf) {
   /* YOUR CODE HERE */
   /* printf("NOT IMPLEMENTED\n"); */
@@ -63,6 +66,7 @@ bool file_write(struct file *file, int offset, int bytes, const char *buf) {
   return true;
 }
 
+// write [offset, offset + bytes] from file to buf
 bool file_read(const struct file *file, int offset, int bytes, char *buf) {
   /* YOUR CODE HERE */
   /* printf("NOT IMPLEMENTED\n"); */

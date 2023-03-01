@@ -6,6 +6,8 @@
 #include <string.h>
 // headers
 // functions
+
+// construct a new explorer pointer
 struct explorer *explorer_new(void) {
   // Allocate memory
   struct explorer *exp = calloc(1, sizeof(struct explorer));
@@ -14,6 +16,7 @@ struct explorer *explorer_new(void) {
   return exp;
 }
 
+// release the memory of a explorer pointer
 void explorer_release(struct explorer *exp) {
   // Check for null pointer
   if (!exp) {
@@ -24,6 +27,7 @@ void explorer_release(struct explorer *exp) {
   free(exp);
 }
 
+// read the range [offset, offset+bytes-1] from name to buf
 bool explorer_read(const struct explorer *exp, const char *name, int offset,
                    int bytes, char *buf) {
   // Initialization
@@ -41,6 +45,7 @@ bool explorer_read(const struct explorer *exp, const char *name, int offset,
   return file_read(sub->inner.file, offset, bytes, buf);
 }
 
+// read the range [offset, offset+bytes-1] from buf to name
 bool explorer_write(struct explorer *exp, const char *name, int offset,
                     int bytes, const char *buf) {
   // Initialization
@@ -58,6 +63,7 @@ bool explorer_write(struct explorer *exp, const char *name, int offset,
   return file_write(sub->inner.file, offset, bytes, buf);
 }
 
+//create a new file
 bool explorer_create(struct explorer *exp, char *name, int type) {
   // Check for valid arguments
   if (!exp || dir_find_node(exp->cwd, name)) {
@@ -67,6 +73,7 @@ bool explorer_create(struct explorer *exp, char *name, int type) {
   return dir_add_file(exp->cwd, type, name);
 }
 
+// create a directory
 bool explorer_mkdir(struct explorer *exp, char *name) {
   // Check for valid arguments
   if (!exp || dir_find_node(exp->cwd, name)) { // handle null pointer
@@ -76,6 +83,7 @@ bool explorer_mkdir(struct explorer *exp, char *name) {
   return dir_add_subdir(exp->cwd, name);
 }
 
+// delete a file
 bool explorer_delete(struct explorer *exp, const char *name) {
   // Check for null pointer
   if (!exp) {
@@ -85,6 +93,7 @@ bool explorer_delete(struct explorer *exp, const char *name) {
   return dir_delete(exp->cwd, name);
 }
 
+// change directory to the parent directory of current working directory
 bool explorer_cdpar(struct explorer *exp) {
   if (!exp || exp->cwd == exp->root) { // handle null pointer
     return false;// check not root
@@ -93,6 +102,7 @@ bool explorer_cdpar(struct explorer *exp) {
   return true;
 }
 
+// change current working directory to a subdir named name
 bool explorer_chdir(struct explorer *exp, const char *name) {
   struct node *sub = NULL;
   if (!exp || !name) {// handle null pointer
@@ -106,6 +116,7 @@ bool explorer_chdir(struct explorer *exp, const char *name) {
   return true;//success
 }
 
+// register a new callback function for filetype number
 bool explorer_support_filetype(struct explorer *exp, open_func callback,
                                int filetype) {
   if (!exp || callback == NULL || filetype < 0 || filetype >= MAX_FT_NO) {
@@ -118,6 +129,7 @@ bool explorer_support_filetype(struct explorer *exp, open_func callback,
   return true;
 }
 
+// register a new callback function for filetype number
 bool explorer_open(const struct explorer *exp, const char *name) {
   struct node *sub = NULL;//initialize
   struct file *file = NULL;
@@ -136,6 +148,7 @@ bool explorer_open(const struct explorer *exp, const char *name) {
   return true;//success
 }
 
+// search a file
 static void search(struct node *node, char **path, const char *name,
                    find_func callback) {
   struct directory *dir = NODE_DIR(node);// make directory
@@ -157,6 +170,7 @@ static void search(struct node *node, char **path, const char *name,
   (*path)[pathlen] = '\0';
 }
 
+// search a file recursively
 void explorer_search_recursive(struct explorer *exp, const char *name,
                                find_func callback) {
   char *path = NULL; // initialize
@@ -168,6 +182,7 @@ void explorer_search_recursive(struct explorer *exp, const char *name,
   free(path); // free memory
 }
 
+// check whether contain a file
 bool explorer_contain(struct explorer *exp, const char *name) {
   return exp ? dir_find_node(exp->cwd, name) != NULL : false; // check contain
 }

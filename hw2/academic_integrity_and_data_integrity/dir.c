@@ -9,6 +9,8 @@
 // {
     // return;
 // } 
+
+//construct a new directory
 struct directory *dir_new(char *name) {
   /* Initialization */
   struct directory *dir = NULL;
@@ -26,7 +28,10 @@ struct directory *dir_new(char *name) {
   dir->base = node_new(true, name, dir);
   return dir;
 }
+
 #include <stdio.h>
+
+// release the pointer memory of the directory
 void dir_release(struct directory *dir) {
   /* Initialization */
   int i = 0;
@@ -48,6 +53,7 @@ void dir_release(struct directory *dir) {
   free(dir);
 }
 
+// find if there has a directory named 'name'
 struct node *dir_find_node(const struct directory *dir, const char *name) {
   /* YOUR CODE HERE */
   /* printf("NOT IMPLEMENTED\n"); */
@@ -64,6 +70,7 @@ struct node *dir_find_node(const struct directory *dir, const char *name) {
   return NULL;/* do not matched any node*/
 }
 
+// add a file to the dir
 bool dir_add_file(struct directory *dir, int type, char *name) {
   /* YOUR CODE HERE */
   /*printf("NOT IMPLEMENTED\n");*/
@@ -97,6 +104,7 @@ bool dir_add_file(struct directory *dir, int type, char *name) {
   return true;/*success*/
 }
 
+// add a sub-directory to dir
 bool dir_add_subdir(struct directory *dir, char *name) {
   /* YOUR CODE HERE */
   /*printf("NOT IMPLEMENTED\n"); */
@@ -116,7 +124,7 @@ bool dir_add_subdir(struct directory *dir, char *name) {
   if(dir->size == dir->capacity)
   {
     dir->capacity *= 2; /* enlarge the capacity of dir*/
-    dir->subordinates = realloc(dir->subordinates, sizeof(struct node*) * dir->capacity);
+    dir->subordinates = (struct node**)realloc(dir->subordinates, sizeof(struct node*) * dir->capacity);
     for(int i = dir->capacity / 2; i < dir->capacity; ++i)
       dir->subordinates[i] = NULL; /* init unused as null pointer */
   }
@@ -132,6 +140,7 @@ bool dir_add_subdir(struct directory *dir, char *name) {
   return true;/*success*/
 }
 
+// delete a directory
 bool dir_delete(struct directory *dir, const char *name) {
   /* YOUR CODE HERE */
   /* printf("NOT IMPLEMENTED\n"); */
