@@ -117,6 +117,10 @@ threadpool_t *threadpool_create(size_t thread_count, size_t queue_size, bool syn
     for (size_t i = 0; i < thread_count; i++, pool->thread_count = i) {
         // TODO: pthread_create may fail ... but when?
         // RTFM!
+
+
+
+
         pthread_create(&(pool->thread_list[i]), NULL, threadpool_thread, (void *) pool);
     }
 
@@ -142,8 +146,16 @@ bool threadpool_add_task(threadpool_t *pool, void (*func)(void *), void *args) {
     /* 3. Add a task to ringbuffer */
     // TODO: implement
 
+    // The function should return false if the threadpool is full. 
+    if(pool->thread_count == pool->task_list->size)
+    {
+        lock_release(pool);
+        return false;
+    }
 
-
+    // Add a task with function func and argument args into the threadpool pool.
+    pool->thread_list[++pool->thread_count] = func;
+    pool->thread_list[pool->thread_count] = args;
 
 
     /* 4. Wake up a random available worker */
@@ -188,6 +200,23 @@ bool threadpool_destroy(threadpool_t *pool) {
     // TODO: join all worker threads
 
 
+    /*
+    if(pool->sync == true)
+    {
+        for(int i = 0; i < pool->thread_count; i++)
+        {
+            pthread_join(pool->thread_list[i], NULL);
+        }
+    }
+    else
+    {
+        for(int i = 0; i < pool->thread_count; i++)
+        {
+            pthread_detach(pool->thread_list[i]);
+        }
+    }
+    */
+
 
 
 
@@ -196,6 +225,8 @@ bool threadpool_destroy(threadpool_t *pool) {
 
 
 
-    
-    return false;
+
+
+    return true;
+    // return false;
 }
