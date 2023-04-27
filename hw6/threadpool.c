@@ -44,11 +44,20 @@ static void *threadpool_thread(void *threadpool) {
         /* 4. If shutdown */
         if (pool->shutdown) {
             // TODO: sync?
+
+
+
+
             pthread_exit(NULL);
         }
 
         /* 5. Fetch next task */
         // TODO: fetch next task
+
+
+
+
+
 
         /* 6. Unlock */
         assert(lock_release(pool));
@@ -133,6 +142,10 @@ bool threadpool_add_task(threadpool_t *pool, void (*func)(void *), void *args) {
     /* 3. Add a task to ringbuffer */
     // TODO: implement
 
+
+
+
+
     /* 4. Wake up a random available worker */
     if (pthread_cond_signal(&(pool->notify)) != 0) {
         lock_release(pool);
@@ -174,7 +187,15 @@ bool threadpool_destroy(threadpool_t *pool) {
     /* 6. Wait for all threads terminate */
     // TODO: join all worker threads
 
+
+
+
+
     /* 7. Deallocate all resources given */
     // TODO: implement
+
+
+
+    
     return false;
 }
