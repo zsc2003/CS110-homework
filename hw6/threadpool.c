@@ -44,26 +44,45 @@ static void *threadpool_thread(void *threadpool) {
         /* 4. If shutdown */
         if (pool->shutdown) {
             // TODO: sync?
+            /*
+                If sync == true when the threadpool was created, wait until all tasks are finished.
+                Else, abort all waiting tasks immediately and return as soon as the threadpool finish its running tasks.
+            */
 
+            threadpool_task_t *task = (threadpool_task_t *)malloc(sizeof(threadpool_task_t));
+            if(pool->sync == true)
+            {
+                while(!ringbuffer_is_empty(pool->task_list))
+                {
+                    assert(ringbuffer_pop(pool->task_list, task));
+                    task->func(task->args);
+                }
+            }
+            else
+            {
+                while(!ringbuffer_is_empty(pool->task_list))
+                {
+                    assert(ringbuffer_pop(pool->task_list, task));
+                }
+            }
+            free(task);
 
-
-
-            pthread_exit(NULL);
+            lock_release(pool);
+            return NULL;
         }
 
         /* 5. Fetch next task */
         // TODO: fetch next task
-
-
-
-
-
+        threadpool_task_t *task = (threadpool_task_t *)malloc(sizeof(threadpool_task_t));
+        assert(ringbuffer_pop(pool->task_list, task));
 
         /* 6. Unlock */
         assert(lock_release(pool));
 
         /* 7. Get to work */
         // TODO: run next task
+        task->func(task->args);
+        free(task);
     }
 }
 
@@ -118,10 +137,14 @@ threadpool_t *threadpool_create(size_t thread_count, size_t queue_size, bool syn
         // TODO: pthread_create may fail ... but when?
         // RTFM!
 
+        // pthread_create failed
+        if(pthread_create(&(pool->thread_list[i]), NULL, threadpool_thread, (void *)pool) != 0)
+        {
+            deallocate_all(pool);
+            return NULL;
+        }
 
-
-
-        pthread_create(&(pool->thread_list[i]), NULL, threadpool_thread, (void *) pool);
+        // pthread_create(&(pool->thread_list[i]), NULL, threadpool_thread, (void *) pool);
     }
 
     return pool;
@@ -147,15 +170,19 @@ bool threadpool_add_task(threadpool_t *pool, void (*func)(void *), void *args) {
     // TODO: implement
 
     // The function should return false if the threadpool is full. 
-    if(pool->thread_count == pool->task_list->size)
+    if(ringbuffer_is_full(pool->task_list))
+    {
+        return false;
+    }
+    // Add a task with function func and argument args into the threadpool pool.
+    // if(!ringbuffer_push(pool->task_list, (threadpool_task_t){func, args}))
+    threadpool_task_t task;
+    task.args=args, task.func=func;
+    if(!ringbuffer_push(pool->task_list, task))
     {
         lock_release(pool);
         return false;
     }
-
-    // Add a task with function func and argument args into the threadpool pool.
-    pool->thread_list[++pool->thread_count] = func;
-    pool->thread_list[pool->thread_count] = args;
 
 
     /* 4. Wake up a random available worker */
@@ -198,33 +225,18 @@ bool threadpool_destroy(threadpool_t *pool) {
 
     /* 6. Wait for all threads terminate */
     // TODO: join all worker threads
-
-
-    /*
-    if(pool->sync == true)
+    for (size_t i = 0; i != pool->thread_count; ++i)
     {
-        for(int i = 0; i < pool->thread_count; i++)
+        if(pthread_join(pool->thread_list[i], NULL) != 0)
         {
-            pthread_join(pool->thread_list[i], NULL);
+            return false;
         }
     }
-    else
-    {
-        for(int i = 0; i < pool->thread_count; i++)
-        {
-            pthread_detach(pool->thread_list[i]);
-        }
-    }
-    */
-
-
 
 
     /* 7. Deallocate all resources given */
     // TODO: implement
-
-
-
+    deallocate_all(pool);
 
 
     return true;
