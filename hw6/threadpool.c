@@ -175,10 +175,7 @@ bool threadpool_add_task(threadpool_t *pool, void (*func)(void *), void *args) {
         return false;
     }
     // Add a task with function func and argument args into the threadpool pool.
-    // if(!ringbuffer_push(pool->task_list, (threadpool_task_t){func, args}))
-    threadpool_task_t task;
-    task.args=args, task.func=func;
-    if(!ringbuffer_push(pool->task_list, task))
+    if(!ringbuffer_push(pool->task_list, (threadpool_task_t){func, args}))
     {
         lock_release(pool);
         return false;
