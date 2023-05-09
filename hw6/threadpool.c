@@ -73,16 +73,15 @@ static void *threadpool_thread(void *threadpool) {
 
         /* 5. Fetch next task */
         // TODO: fetch next task
-        threadpool_task_t *task = (threadpool_task_t *)malloc(sizeof(threadpool_task_t));
-        assert(ringbuffer_pop(pool->task_list, task));
+        threadpool_task_t task;
+        assert(ringbuffer_pop(pool->task_list, &task));
 
         /* 6. Unlock */
         assert(lock_release(pool));
 
         /* 7. Get to work */
         // TODO: run next task
-        task->func(task->args);
-        free(task);
+        task.func(task.args);
     }
 }
 
