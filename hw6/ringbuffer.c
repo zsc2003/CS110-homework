@@ -4,7 +4,8 @@
 ringbuffer_t *ringbuffer_create(size_t size) {
     ringbuffer_t *ringbuffer = malloc(sizeof(ringbuffer_t));
     /* malloc failed */
-    if (ringbuffer == NULL) {
+    if (ringbuffer == NULL)
+	{
         return NULL;
     }
     ringbuffer->size = size;
