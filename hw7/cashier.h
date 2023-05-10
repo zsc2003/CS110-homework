@@ -13,7 +13,7 @@ uint8_t mem_read(uint64_t addr);
 void mem_write(uint64_t addr, uint8_t byte);
 
 // Configuration of the cache
-struct cache_config {
+typedef struct cache_config {
   // address space size in bits: A=T+I+O
   uint64_t address_bits;
   // size of each cache line in bytes: guaranteed to be power of 2
@@ -22,10 +22,10 @@ struct cache_config {
   uint64_t lines;
   // N-way associative cache
   uint64_t ways;
-};
+}cache_config;
 
 // Cache line data structure
-struct cache_line {
+typedef struct cache_line {
   // the valid bit and dirty bit
   bool valid, dirty;
   // tag bits of this cache line, initialize to
@@ -35,7 +35,7 @@ struct cache_line {
   uint64_t last_access;
   // the data bytes in this cache line
   uint8_t *data;
-};
+}cache_line;
 
 // call this function before evicting one cache line
 void before_eviction(uint64_t set_index, struct cache_line *victim);
@@ -47,7 +47,7 @@ void before_eviction(uint64_t set_index, struct cache_line *victim);
 // - load entire cache line from data memory on miss
 // - write-back dirty cache line on eviction
 //
-struct cashier {
+typedef struct cashier {
   // cache simulator configuration
   struct cache_config config;
   // total data bytes in the cache
@@ -55,7 +55,7 @@ struct cashier {
 
   // number of bits in tag segment; bit mask for extracting the tag bits.
   uint64_t tag_bits, tag_mask;
-  // number of bits in index segment; bit mask for extracting the tag bits.
+  // number of bits in index segment; bit mask for extracting the index bits.
   uint64_t index_bits, index_mask;
   // number of bits in offset segment; bit mask for extracting the offset bits.
   uint64_t offset_bits, offset_mask;
@@ -65,7 +65,7 @@ struct cashier {
   // for (i,j) in [0,sets-1] x [0,associative-1]
   // the j-th slot in i-th set is `data[i * slots_per_way + j]`
   struct cache_line *lines;
-};
+}cashier;
 
 // initialize a cache simulator for a configuration
 // return NULL on resource allocation failure

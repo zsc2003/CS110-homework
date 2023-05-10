@@ -25,10 +25,10 @@ uint8_t rand_u8(void);
   } while (0)
 
 static uint64_t ts = 0;
-void inc_timestamp() { ts++; }
+void inc_timestamp() { ts++; } // increment timestamp
 uint64_t get_timestamp() { return ts; }
 
-uint8_t mem_read(uint64_t addr) { return *(uint8_t *)addr; }
+uint8_t mem_read(uint64_t addr) { return *(uint8_t *)addr; } // memory read
 void mem_write(uint64_t addr, uint8_t byte) { *(uint8_t *)addr = byte; }
 
 uint8_t rand_u8() { return (uint8_t)rand(); }
@@ -70,7 +70,7 @@ void dot_test(struct cache_config config, uint64_t N) {
     write(b + i, rand_u8());
   }
   log("compute dot product");
-  for (uint64_t i = 0; i < N; i++) {
+  for (uint64_t i = 0; i < N; i++) { // computing dot product
     log("adding the %" PRIu64 "-th coordinate", i);
     uint8_t ai = read(a + i);
     uint8_t bi = read(b + i);
@@ -78,7 +78,7 @@ void dot_test(struct cache_config config, uint64_t N) {
     write(dot, doti + ai * bi);
   }
   log("finished, release cache");
-  cashier_release(cache);
+  cashier_release(cache); // release cache
 
   // post
   for (uint64_t i = 0; i < N; i++)
@@ -89,7 +89,7 @@ void dot_test(struct cache_config config, uint64_t N) {
 int main() {
   struct cache_config config = (struct cache_config){
       .line_size = 4, .lines = 16, .ways = 4, .address_bits = 64};
-  uint64_t n = 10;
+  uint64_t n = 10; // dot product of 10 coordinates
   dot_test(config, n);
   return 0;
 };
