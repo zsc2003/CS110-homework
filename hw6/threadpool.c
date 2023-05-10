@@ -171,6 +171,7 @@ bool threadpool_add_task(threadpool_t *pool, void (*func)(void *), void *args) {
     // The function should return false if the threadpool is full. 
     if(ringbuffer_is_full(pool->task_list))
     {
+        lock_release(pool);
         return false;
     }
     // Add a task with function func and argument args into the threadpool pool.
