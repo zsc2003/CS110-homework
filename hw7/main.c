@@ -62,10 +62,13 @@ void dot_test(struct cache_config config, uint64_t N) {
   uint8_t *b = aligned_alloc(config.line_size, sz);
   uint8_t *dot = aligned_alloc(config.line_size, sz);
 
+  // printf("%#x\n", a);
+  // printf("%#x\n", b);
   // test
   cache = cashier_init(config);
   log("fill array with random data");
   for (uint64_t i = 0; i < N; i++) {
+
     write(a + i, rand_u8());
     write(b + i, rand_u8());
   }
@@ -74,15 +77,20 @@ void dot_test(struct cache_config config, uint64_t N) {
     log("adding the %" PRIu64 "-th coordinate", i);
     uint8_t ai = read(a + i);
     uint8_t bi = read(b + i);
-    uint8_t doti = read(dot);
-    write(dot, doti + ai * bi);
+    uint8_t doti = read(dot + i);
+    // printf("ai = %u, bi = %u, doti = %u\n", ai, bi, doti);
+    write(dot + i, doti + ai * bi);
   }
   log("finished, release cache");
   cashier_release(cache); // release cache
 
   // post
   for (uint64_t i = 0; i < N; i++)
+  {
+    // uint8_t doti = read(&dot[i]);
     log("dot product result %u", dot[i]);
+    // printf("doti = %u\n", doti);
+  }
   free(a), free(b), free(dot);
 }
 
