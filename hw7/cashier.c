@@ -10,10 +10,13 @@ struct cashier *cashier_init(struct cache_config config)
   // YOUR CODE HERE
   // create a cache simulator with a set of parameters. 
 
-  struct cashier* cache = (struct cashier*)malloc(sizeof(struct cashier));
+  struct cashier* cache = malloc(sizeof(struct cashier));
   if(!cache) // You should return NULL on error.
     return NULL;
   cache->config = config;
+
+  //  lines : total lines -> ways * lines / way
+  cache->config.lines /= cache->config.ways;
 
   cache->lines = malloc(sizeof(struct cache_line) * config.lines * config.ways);
   if(!cache->lines) // You should return NULL on error.
@@ -24,7 +27,6 @@ struct cashier *cashier_init(struct cache_config config)
 
   // total data bytes in the cache
   cache->size = config.line_size * config.lines;
-
   //  | tag | index | offset  |
   //    T      S       B
   //  line_size = 2^B
@@ -34,22 +36,24 @@ struct cashier *cashier_init(struct cache_config config)
   
   // number of bits in offset segment; bit mask for extracting the offset bits.
   cache->offset_bits = 0;
-  while((config.line_size >> cache->offset_bits) != 1)
+  while((cache->config.line_size >> cache->offset_bits) != 1)
     ++cache->offset_bits;
   cache->offset_mask = (1 << cache->offset_bits) - 1;
 
   // number of bits in index segment; bit mask for extracting the index bits.
   cache->index_bits = 0;
-  while((config.lines >> cache->index_bits) != 1)
+  while((cache->config.lines >> cache->index_bits) != 1)
     ++cache->index_bits;
   cache->index_mask = (1 << (cache->index_bits + cache->offset_bits)) - 1 - cache->offset_mask;
 
   // number of bits in tag segment; bit mask for extracting the tag bits.
   cache->tag_bits = config.address_bits - cache->index_bits - cache->offset_bits;
-  cache->tag_mask = __LONG_LONG_MAX__ - cache->index_mask - cache->offset_mask;
+  // cache->tag_mask = (0x7fffffffffffffffLL) - cache->index_mask - cache->offset_mask;
+  cache->tag_mask = (((uint64_t)1 << cache->tag_bits) - 1) << (cache->index_bits + cache->offset_bits);
+
 
   // initialize the cache lines
-  for (size_t i = 0; i != config.lines * config.ways; ++i)
+  for (size_t i = 0; i != cache->config.lines * cache->config.ways; ++i)
   {
     cache->lines[i].valid = false; // You don’t need to validate the parameters
     cache->lines[i].dirty = false;
@@ -67,7 +71,7 @@ struct cashier *cashier_init(struct cache_config config)
     }
   }
   // printf("tag_bits = %lu\nindex_bit = %lu\noffset_bit = %lu\n", cache->tag_bits, cache->index_bits, cache->offset_bits);
-  // printf("tag_mask = %lu\nindex_mask = %lu\noffset_mask = %lu\n", cache->tag_mask, cache->index_mask, cache->offset_mask);
+  printf("tag_mask = %lu\nindex_mask = %lu\noffset_mask = %lu\n", cache->tag_mask, cache->index_mask, cache->offset_mask);
   // You don’t need to validate the parameters.
   return cache;
 }
@@ -81,6 +85,10 @@ void cashier_release(struct cashier *cache)
   {
     for (size_t j = 0; j != cache->config.ways; ++j)
     {
+      // All the cache lines are considered evicted on cashier_release
+      if(cache->lines[i * cache->config.ways + j].valid)
+        before_eviction(i, &cache->lines[i * cache->config.ways + j]);
+
       size_t cache_index = i * cache->config.ways + j;
       if(cache->lines[cache_index].dirty)
       {

@@ -88,6 +88,7 @@ void dot_test(struct cache_config config, uint64_t N) {
   for (uint64_t i = 0; i < N; i++)
   {
     // uint8_t doti = read(&dot[i]);
+    inc_timestamp();
     log("dot product result %u", dot[i]);
     // printf("doti = %u\n", doti);
   }
