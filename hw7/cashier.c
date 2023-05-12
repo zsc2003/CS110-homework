@@ -71,7 +71,7 @@ struct cashier *cashier_init(struct cache_config config)
     }
   }
   // printf("tag_bits = %lu\nindex_bit = %lu\noffset_bit = %lu\n", cache->tag_bits, cache->index_bits, cache->offset_bits);
-  printf("tag_mask = %lu\nindex_mask = %lu\noffset_mask = %lu\n", cache->tag_mask, cache->index_mask, cache->offset_mask);
+  // printf("tag_mask = %lu\nindex_mask = %lu\noffset_mask = %lu\n", cache->tag_mask, cache->index_mask, cache->offset_mask);
   // You don’t need to validate the parameters.
   return cache;
 }
@@ -81,15 +81,16 @@ void cashier_release(struct cashier *cache)
   // YOUR CODE HERE
 
   // release the resources allocated for the cache simulator
-  for (size_t i = 0; i != cache->config.lines; ++i)
+  for (size_t j = 0; j != cache->config.ways; ++j)
   {
-    for (size_t j = 0; j != cache->config.ways; ++j)
+    for (size_t i = 0; i != cache->config.lines; ++i)
     {
-      // All the cache lines are considered evicted on cashier_release
-      if(cache->lines[i * cache->config.ways + j].valid)
-        before_eviction(i, &cache->lines[i * cache->config.ways + j]);
-
       size_t cache_index = i * cache->config.ways + j;
+
+      // All the cache lines are considered evicted on cashier_release
+      if(cache->lines[cache_index].valid)
+        before_eviction(i, &cache->lines[cache_index]);
+
       if(cache->lines[cache_index].dirty)
       {
         // printf("line = %lu, way = %lu\n", i, j);
@@ -99,6 +100,7 @@ void cashier_release(struct cashier *cache)
         for(size_t k = 0; k != cache->config.line_size; ++k)
           mem_write(addr + k, cache->lines[cache_index].data[k]);
       }
+
       free(cache->lines[cache_index].data);
     }
   }

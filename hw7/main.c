@@ -77,9 +77,9 @@ void dot_test(struct cache_config config, uint64_t N) {
     log("adding the %" PRIu64 "-th coordinate", i);
     uint8_t ai = read(a + i);
     uint8_t bi = read(b + i);
-    uint8_t doti = read(dot + i);
+    uint8_t doti = read(dot);
     // printf("ai = %u, bi = %u, doti = %u\n", ai, bi, doti);
-    write(dot + i, doti + ai * bi);
+    write(dot, doti + ai * bi);
   }
   log("finished, release cache");
   cashier_release(cache); // release cache
