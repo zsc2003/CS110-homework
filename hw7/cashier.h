@@ -28,7 +28,7 @@ typedef struct cache_config {
 typedef struct cache_line {
   // the valid bit and dirty bit
   bool valid, dirty;
-  // tag bits of this cache line, initialize to
+  // tag bits of this cache line, initialize to 0
   uint64_t tag;
   // last access timestamp
   // update to `get_timestamp()` on access, initialized to 0
