@@ -18,7 +18,7 @@ struct cashier *cashier_init(struct cache_config config)
   //  lines : total lines -> ways * lines / way
   cache->config.lines /= cache->config.ways;
 
-  cache->lines = malloc(sizeof(struct cache_line) * config.lines * config.ways);
+  cache->lines = malloc(sizeof(struct cache_line) * cache->config.lines * cache->config.ways);
   if(!cache->lines) // You should return NULL on error.
   {
     free(cache);
