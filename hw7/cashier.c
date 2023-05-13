@@ -250,15 +250,16 @@ bool cashier_write(struct cashier *cache, uint64_t addr, uint8_t byte)
     cache->lines[empty_index].last_access = get_timestamp();
     cache->lines[empty_index].tag = tag;
     cache->lines[empty_index].valid = true;
-    cache->lines[empty_index].dirty = false;
+    cache->lines[empty_index].dirty = true;
 
     // modify the memory
-    mem_write(addr, byte);
+    // mem_write(addr, byte);
 
     // store the data from memory to the cache line
     for(size_t j = 0; j != cache->config.line_size; ++j)
       cache->lines[empty_index].data[j] = mem_read(addr - offset + j);
 
+    cache->lines[empty_index].data[offset] = byte;
     return false; // return false on cache miss
   }
   
@@ -275,13 +276,14 @@ bool cashier_write(struct cashier *cache, uint64_t addr, uint8_t byte)
   cache->lines[victim_index].last_access = get_timestamp();
   cache->lines[victim_index].tag = tag;
   cache->lines[victim_index].valid = true;
-  cache->lines[victim_index].dirty = false;
+  cache->lines[victim_index].dirty = true;
 
   // modify the memory
-  mem_write(addr, byte);
+  // mem_write(addr, byte);
   
   // store the data from memory to the cache line
   for(size_t i = 0; i < cache->config.line_size; ++i)
     cache->lines[victim_index].data[i] = mem_read(addr - offset + i);
+  cache->lines[victim_index].data[offset] = byte;
   return false; // return false on cache miss
 }
