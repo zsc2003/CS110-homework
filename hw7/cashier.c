@@ -16,9 +16,9 @@ struct cashier *cashier_init(struct cache_config config)
   cache->config = config;
 
   //  lines : total lines -> ways * lines / way
-  cache->config.lines /= cache->config.ways;
+  size_t lines_per_way = cache->config.lines / cache->config.ways;
 
-  cache->lines = malloc(sizeof(struct cache_line) * cache->config.lines * cache->config.ways);
+  cache->lines = malloc(sizeof(struct cache_line) * lines_per_way * cache->config.ways);
   if(!cache->lines) // You should return NULL on error.
   {
     free(cache);
@@ -26,7 +26,7 @@ struct cashier *cashier_init(struct cache_config config)
   }
 
   // total data bytes in the cache
-  cache->size = config.line_size * config.lines;
+  cache->size = cache->config.line_size * lines_per_way * cache->config.ways;
   //  | tag | index | offset  |
   //    T      S       B
   //  line_size = 2^B
@@ -36,30 +36,36 @@ struct cashier *cashier_init(struct cache_config config)
   
   // number of bits in offset segment; bit mask for extracting the offset bits.
   cache->offset_bits = 0;
-  while((cache->config.line_size >> cache->offset_bits) != 1)
-    ++cache->offset_bits;
-  cache->offset_mask = (1 << cache->offset_bits) - 1;
+  if(cache->config.line_size != 0)
+  {
+    while((cache->config.line_size >> cache->offset_bits) != 1)
+      ++cache->offset_bits;  
+  }
+  cache->offset_mask = ((uint64_t)1 << cache->offset_bits) - 1;
 
   // number of bits in index segment; bit mask for extracting the index bits.
   cache->index_bits = 0;
-  while((cache->config.lines >> cache->index_bits) != 1)
-    ++cache->index_bits;
-  cache->index_mask = (1 << (cache->index_bits + cache->offset_bits)) - 1 - cache->offset_mask;
+  if(lines_per_way != 0)
+  {
+    while((lines_per_way >> cache->index_bits) != 1)
+      ++cache->index_bits;
+  }
+  cache->index_mask = (((uint64_t)1 << cache->index_bits) - 1) << cache->offset_bits;
 
   // number of bits in tag segment; bit mask for extracting the tag bits.
-  cache->tag_bits = config.address_bits - cache->index_bits - cache->offset_bits;
+  cache->tag_bits = cache->config.address_bits - cache->index_bits - cache->offset_bits;
   // cache->tag_mask = (0x7fffffffffffffffLL) - cache->index_mask - cache->offset_mask;
   cache->tag_mask = (((uint64_t)1 << cache->tag_bits) - 1) << (cache->index_bits + cache->offset_bits);
 
 
   // initialize the cache lines
-  for (size_t i = 0; i != cache->config.lines * cache->config.ways; ++i)
+  for (size_t i = 0; i != lines_per_way * cache->config.ways; ++i)
   {
     cache->lines[i].valid = false; // You don’t need to validate the parameters
     cache->lines[i].dirty = false;
     cache->lines[i].tag = 0;
     cache->lines[i].last_access = 0; // update to `get_timestamp()` on access, initialized to 0
-    cache->lines[i].data = malloc(config.line_size * sizeof(uint8_t));
+    cache->lines[i].data = malloc(cache->config.line_size * sizeof(uint8_t));
 
     if(!cache->lines[i].data) // You should return NULL on error.
     {
@@ -80,10 +86,12 @@ void cashier_release(struct cashier *cache)
 {
   // YOUR CODE HERE
 
+  size_t lines_per_way = cache->config.lines / cache->config.ways;
+
   // release the resources allocated for the cache simulator
-  for (size_t j = 0; j != cache->config.ways; ++j)
+  for (size_t i = 0; i != lines_per_way; ++i)
   {
-    for (size_t i = 0; i != cache->config.lines; ++i)
+    for (size_t j = 0; j != cache->config.ways; ++j)
     {
       size_t cache_index = i * cache->config.ways + j;
 
@@ -116,6 +124,8 @@ bool cashier_read(struct cashier *cache, uint64_t addr, uint8_t *byte)
   uint64_t tag = (addr & cache->tag_mask)  >> (cache->index_bits + cache->offset_bits);
   uint64_t index = (addr & cache->index_mask) >> cache->offset_bits;
   uint64_t offset = addr & cache->offset_mask;
+
+  // size_t lines_per_way = cache->config.lines / cache->config.ways;
 
   for(size_t i = 0; i != cache->config.ways; ++i)
   {
@@ -196,6 +206,9 @@ bool cashier_write(struct cashier *cache, uint64_t addr, uint8_t byte)
   uint64_t offset = addr & cache->offset_mask;
 
   // printf("tag = %lu\nindex = %lu\noffset = %lu\n", tag, index, offset);
+
+  // size_t lines_per_way = cache->config.lines / cache->config.ways;
+
 
   for(size_t i = 0; i != cache->config.ways; ++i)
   {
