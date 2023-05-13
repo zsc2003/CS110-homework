@@ -129,11 +129,20 @@ bool cashier_read(struct cashier *cache, uint64_t addr, uint8_t *byte)
 
   // size_t lines_per_way = cache->config.lines / cache->config.ways;
 
+  // may have a victim
+  size_t victim_index = index * cache->config.ways + 0;
+  size_t empty_index = 0xffffffffffffffffLL;
+
   for(size_t i = 0; i != cache->config.ways; ++i)
   {
     // printf("i = %lu\n", i);
     // the j-th slot in i-th set is `data[i * slots_per_way + j]`
     size_t cache_index = index * cache->config.ways + i;
+
+    // LRU replacement policy
+    if(cache->lines[cache_index].last_access < cache->lines[victim_index].last_access)
+      victim_index = cache_index;
+
     if(cache->lines[cache_index].valid && cache->lines[cache_index].tag == tag)
     {
       // cache hit
@@ -141,41 +150,31 @@ bool cashier_read(struct cashier *cache, uint64_t addr, uint8_t *byte)
       cache->lines[cache_index].last_access = get_timestamp();
       return true; // return true on cache hit
     }
+
+    // found an empty slot
+    if(cache->lines[cache_index].valid == false && empty_index == 0xffffffffffffffffLL)
+      empty_index = cache_index;
   }
 
   // cache miss
   // load entire cache line from data memory on miss
 
-  for(size_t i = 0; i != cache->config.ways; ++i)
+  // found an empty slot
+  if(empty_index != 0xffffffffffffffffLL)
   {
-    // the j-th slot in i-th set is `data[i * slots_per_way + j]`
-    size_t cache_index = index * cache->config.ways + i;
     // Placing the cache line at a previously invalidated slot
     // is not considered as an eviction.
-    if(cache->lines[cache_index].valid == false)
-    {
-      cache->lines[cache_index].last_access = get_timestamp();
-      cache->lines[cache_index].tag = tag;
-      cache->lines[cache_index].valid = true;
-      cache->lines[cache_index].dirty = false;
+    cache->lines[empty_index].last_access = get_timestamp();
+    cache->lines[empty_index].tag = tag;
+    cache->lines[empty_index].valid = true;
+    cache->lines[empty_index].dirty = false;
 
-      // store the data from memory to the cache line
-      for(size_t j = 0; j != cache->config.line_size; ++j)
-        cache->lines[cache_index].data[j] = mem_read(addr - offset + j);
+    // store the data from memory to the cache line
+    for(size_t j = 0; j != cache->config.line_size; ++j)
+      cache->lines[empty_index].data[j] = mem_read(addr - offset + j);
 
-      *byte = cache->lines[cache_index].data[offset];
-      return false; // return false on cache miss
-    }
-  }
-
-  // have a victim
-  // use LRU replacement policy
-  size_t victim_index = index * cache->config.ways + 0;
-  for(size_t i = 1; i != cache->config.ways; ++i)
-  {
-    size_t cache_index = index * cache->config.ways + i;
-    if(cache->lines[cache_index].last_access < cache->lines[victim_index].last_access)
-      victim_index = cache_index;
+    *byte = cache->lines[empty_index].data[offset];
+    return false; // return false on cache miss
   }
 
   // Call before_eviction if you have to evict a cache line.
@@ -212,12 +211,21 @@ bool cashier_write(struct cashier *cache, uint64_t addr, uint8_t byte)
 
   // size_t lines_per_way = cache->config.lines / cache->config.ways;
 
+  // may have a victim
+  // use LRU replacement policy
+  size_t victim_index = index * cache->config.ways + 0;
+  size_t empty_index = 0xffffffffffffffffLL;
+
   for(size_t i = 0; i != cache->config.ways; ++i)
   {
     // the j-th slot in i-th set is `data[i * slots_per_way + j]`
     size_t cache_index = index * cache->config.ways + i;
     // printf("%lu\n", cache_index);
     
+    // LRU replacement policy
+    if(cache->lines[cache_index].last_access < cache->lines[victim_index].last_access)
+      victim_index = cache_index;
+
     if(cache->lines[cache_index].valid && cache->lines[cache_index].tag == tag)
     {
       // cache hit
@@ -226,45 +234,35 @@ bool cashier_write(struct cashier *cache, uint64_t addr, uint8_t byte)
       cache->lines[cache_index].last_access = get_timestamp();
       return true; // return true on cache hit
     }
+
+    if(cache->lines[cache_index].valid == false && empty_index == 0xffffffffffffffffLL)
+      empty_index = cache_index;
   }
 
   // cache miss
   // load entire cache line from data memory on miss
 
-  for(size_t i = 0; i != cache->config.ways; ++i)
+  // found an empty slot
+  if(empty_index != 0xffffffffffffffffLL)
   {
-    // the j-th slot in i-th set is `data[i * slots_per_way + j]`
-    size_t cache_index = index * cache->config.ways + i;
     // Placing the cache line at a previously invalidated slot
     // is not considered as an eviction.
-    if(cache->lines[cache_index].valid == false)
-    {
-      cache->lines[cache_index].last_access = get_timestamp();
-      cache->lines[cache_index].tag = tag;
-      cache->lines[cache_index].valid = true;
-      cache->lines[cache_index].dirty = false;
+    cache->lines[empty_index].last_access = get_timestamp();
+    cache->lines[empty_index].tag = tag;
+    cache->lines[empty_index].valid = true;
+    cache->lines[empty_index].dirty = false;
 
-      // modify the memory
-      mem_write(addr, byte);
+    // modify the memory
+    mem_write(addr, byte);
 
-      // store the data from memory to the cache line
-      for(size_t j = 0; j != cache->config.line_size; ++j)
-        cache->lines[cache_index].data[j] = mem_read(addr - offset + j);
+    // store the data from memory to the cache line
+    for(size_t j = 0; j != cache->config.line_size; ++j)
+      cache->lines[empty_index].data[j] = mem_read(addr - offset + j);
 
-      return false; // return false on cache miss
-    }
+    return false; // return false on cache miss
   }
-
+  
   // have a victim
-  // use LRU replacement policy
-  size_t victim_index = index * cache->config.ways + 0;
-  for(size_t i = 1; i != cache->config.ways; ++i)
-  {
-    size_t cache_index = index * cache->config.ways + i;
-    if(cache->lines[cache_index].last_access < cache->lines[victim_index].last_access)
-      victim_index = cache_index;
-  }
-
   // Call before_eviction if you have to evict a cache line.
   before_eviction(index, &cache->lines[victim_index]);
   
