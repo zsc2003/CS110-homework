@@ -127,6 +127,10 @@ void test_hw6(struct cache_config config, uint64_t N) {
 }
 
 int main() {
+  uint64_t test = 0xf000000000000000;
+  printf("%lu\n", test);
+  printf("%lu\n", test >> 1);
+
   /*struct cache_config config = (struct cache_config){
       .line_size = 4, .lines = 16, .ways = 4, .address_bits = 64};
   uint64_t n = 10; // dot product of 10 coordinates
