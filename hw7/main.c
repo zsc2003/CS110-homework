@@ -88,17 +88,61 @@ void dot_test(struct cache_config config, uint64_t N) {
   for (uint64_t i = 0; i < N; i++)
   {
     // uint8_t doti = read(&dot[i]);
-    inc_timestamp();
+    // inc_timestamp();
     log("dot product result %u", dot[i]);
     // printf("doti = %u\n", doti);
   }
   free(a), free(b), free(dot);
 }
 
+void test_hw6(struct cache_config config, uint64_t N) {
+  config = config;
+  N = N;
+  // return;
+  // pre
+  // printf("%#x\n", a);
+  // test
+  uint64_t sz = (N / config.line_size + 1) * config.line_size;
+  uint8_t* array = aligned_alloc(config.line_size, sz);
+  
+  cache = cashier_init(config);
+
+  int repeat_time = 1;
+  int step_size = 2;
+  for(int r = 0;r < repeat_time; ++r)
+  {
+    for (uint64_t i = 0; i < N; i += step_size)
+    {
+      uint8_t a = read(array + i);
+      write(array + i, a + 2333);
+      // write(array[i]);
+    }
+  }
+  
+
+  cashier_release(cache); // release cache
+
+  
+  free(array);
+}
+
 int main() {
-  struct cache_config config = (struct cache_config){
+  uint64_t test = 0xf000000000000000;
+  printf("%lu\n", test);
+  printf("%lu\n", test >> 1);
+
+  /*struct cache_config config = (struct cache_config){
       .line_size = 4, .lines = 16, .ways = 4, .address_bits = 64};
   uint64_t n = 10; // dot product of 10 coordinates
   dot_test(config, n);
+
+  struct cache_config hw6 = (struct cache_config){
+      .line_size = 16, .lines = 4, .ways = 1, .address_bits = 64};
+  test_hw6(hw6, 128);*/
+
+
+  struct cache_config hw6 = (struct cache_config){
+      .line_size = 16, .lines = 4, .ways = 2, .address_bits = 64};
+  test_hw6(hw6, 128);
   return 0;
 };

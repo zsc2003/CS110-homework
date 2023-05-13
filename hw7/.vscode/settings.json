@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "*.md": "markdown",
-        "cashier.h": "c"
+        "cashier.h": "c",
+        "random": "c"
     }
 }
