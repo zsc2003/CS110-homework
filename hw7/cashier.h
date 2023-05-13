@@ -74,8 +74,8 @@ struct cashier *cashier_init(struct cache_config config);
 // also writeback dirty lines
 //
 // The order in which lines are evicted is:
-// set0-slot0, set0-slot1, set0-slotN,
-// set1-slot0, set1-slot1, set1-slotN,
+// set0-slot0, set1-slot0, set2-slot0,
+// set0-slot1, set1-slot1, set2-slot1,
 // and so on.
 void cashier_release(struct cashier *cache);
 // read one byte at a specific address. return hit=true/miss=false
