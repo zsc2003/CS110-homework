@@ -62,7 +62,7 @@ typedef struct cashier {
 
   // the cache lines in this
   //
-  // for (i,j) in [0,sets-1] x [0,associative-1]
+  // for (i,j) in [0,associative-1] x [0,sets-1]
   // the j-th slot in i-th set is `data[i * slots_per_way + j]`
   struct cache_line *lines;
 }cashier;

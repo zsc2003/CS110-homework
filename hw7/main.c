@@ -77,10 +77,20 @@ void dot_test(struct cache_config config, uint64_t N) {
     log("adding the %" PRIu64 "-th coordinate", i);
     uint8_t ai = read(a + i);
     uint8_t bi = read(b + i);
-    uint8_t doti = read(dot);
+    uint8_t doti = read(dot + i);
     // printf("ai = %u, bi = %u, doti = %u\n", ai, bi, doti);
-    write(dot, doti + ai * bi);
+    write(dot + i, doti + ai * bi);
+
+    /*if(dot[1]!=0)
+    {
+      puts("-------------------------------");
+      for (uint64_t i = 0; i < N; i++)
+        log("dot product result %u", dot[i]);
+      puts("-------------------------------");
+      exit(0);
+    }*/
   }
+
   log("finished, release cache");
   cashier_release(cache); // release cache
 
@@ -133,7 +143,7 @@ int main() {
 
   struct cache_config config = (struct cache_config){
       .line_size = 4, .lines = 16, .ways = 4, .address_bits = 64};
-  uint64_t n = 10; // dot product of 10 coordinates
+  uint64_t n = 100; // dot product of 10 coordinates
   dot_test(config, n);
 
   /*struct cache_config hw6 = (struct cache_config){

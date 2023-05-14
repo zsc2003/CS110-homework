@@ -66,7 +66,7 @@ struct cashier *cashier_init(struct cache_config config)
     cache->lines[i].dirty = false;
     cache->lines[i].tag = 0;
     cache->lines[i].last_access = 0; // update to `get_timestamp()` on access, initialized to 0
-    cache->lines[i].data = malloc(sizeof(uint8_t) * config.line_size);
+    cache->lines[i].data = calloc(config.line_size, sizeof(uint8_t));
 
     if(!cache->lines[i].data) // You should return NULL on error.
     {
@@ -90,22 +90,22 @@ void cashier_release(struct cashier *cache)
   size_t lines_per_way = cache->config.lines / cache->config.ways;
 
   // release the resources allocated for the cache simulator
-  for (size_t j = 0; j != cache->config.ways; ++j)
+  for (size_t i = 0; i != cache->config.ways; ++i)
   {
-    for (size_t i = 0; i != lines_per_way; ++i)
+    for (size_t j = 0; j != lines_per_way; ++j)
     {
-      size_t cache_index = i * cache->config.ways + j;
+      size_t cache_index = i * lines_per_way + j;
 
       // All the cache lines are considered evicted on cashier_release
       if(cache->lines[cache_index].valid)
       {
-        before_eviction(i, &cache->lines[cache_index]);
+        before_eviction(j, &cache->lines[cache_index]);
         if(cache->lines[cache_index].dirty)
         {
           // printf("line = %lu, way = %lu\n", i, j);
           // write-back dirty cache line on eviction
           uint64_t addr = (cache->lines[cache_index].tag << (cache->index_bits + cache->offset_bits))
-                        + (i << cache->offset_bits);
+                        + (j << cache->offset_bits);
           for(size_t k = 0; k != cache->config.line_size; ++k)
             mem_write(addr + k, cache->lines[cache_index].data[k]);
         }
@@ -127,17 +127,17 @@ bool cashier_read(struct cashier *cache, uint64_t addr, uint8_t *byte)
   uint64_t index = (addr >> cache->offset_bits) & cache->index_mask;
   uint64_t offset = addr & cache->offset_mask;
 
-  // size_t lines_per_way = cache->config.lines / cache->config.ways;
+  size_t lines_per_way = cache->config.lines / cache->config.ways;
 
   // may have a victim
-  size_t victim_index = index * cache->config.ways + 0;
+  size_t victim_index = 0 * lines_per_way + index;
   size_t empty_index = 0xffffffffffffffffLL;
 
   for(size_t i = 0; i != cache->config.ways; ++i)
   {
     // printf("i = %lu\n", i);
     // the j-th slot in i-th set is `data[i * slots_per_way + j]`
-    size_t cache_index = index * cache->config.ways + i;
+    size_t cache_index = i * lines_per_way + index;
 
     // LRU replacement policy
     if(cache->lines[cache_index].last_access < cache->lines[victim_index].last_access)
@@ -183,9 +183,13 @@ bool cashier_read(struct cashier *cache, uint64_t addr, uint8_t *byte)
   if(cache->lines[victim_index].dirty)
   {
     // write-back dirty cache line on eviction
+    uint64_t victim_addr = (cache->lines[victim_index].tag << (cache->index_bits + cache->offset_bits))
+                         + (index << cache->offset_bits);
     for(size_t i = 0; i != cache->config.line_size; ++i)
-      mem_write(addr - offset + i, cache->lines[victim_index].data[i]);
+      mem_write(victim_addr + i, cache->lines[victim_index].data[i]);
   }
+
+  // set parameters for the new cache line
   cache->lines[victim_index].last_access = get_timestamp();
   cache->lines[victim_index].tag = tag;
   cache->lines[victim_index].valid = true;
@@ -209,17 +213,17 @@ bool cashier_write(struct cashier *cache, uint64_t addr, uint8_t byte)
 
   // printf("tag = %lu\nindex = %lu\noffset = %lu\n", tag, index, offset);
 
-  // size_t lines_per_way = cache->config.lines / cache->config.ways;
+  size_t lines_per_way = cache->config.lines / cache->config.ways;
 
   // may have a victim
   // use LRU replacement policy
-  size_t victim_index = index * cache->config.ways + 0;
+  size_t victim_index = 0 * lines_per_way + index;
   size_t empty_index = 0xffffffffffffffffLL;
 
   for(size_t i = 0; i != cache->config.ways; ++i)
   {
     // the j-th slot in i-th set is `data[i * slots_per_way + j]`
-    size_t cache_index = index * cache->config.ways + i;
+    size_t cache_index = i * lines_per_way + index;
     // printf("%lu\n", cache_index);
     
     // LRU replacement policy
@@ -270,9 +274,13 @@ bool cashier_write(struct cashier *cache, uint64_t addr, uint8_t byte)
   if(cache->lines[victim_index].dirty)
   {
     // write-back dirty cache line on eviction
+    uint64_t victim_addr = (cache->lines[victim_index].tag << (cache->index_bits + cache->offset_bits))
+                         + (index << cache->offset_bits);
     for(size_t i = 0; i != cache->config.line_size; ++i)
-      mem_write(addr - offset + i, cache->lines[victim_index].data[i]);
+      mem_write(victim_addr + i, cache->lines[victim_index].data[i]);
   }
+
+  // set parameters for the new cache line
   cache->lines[victim_index].last_access = get_timestamp();
   cache->lines[victim_index].tag = tag;
   cache->lines[victim_index].valid = true;
